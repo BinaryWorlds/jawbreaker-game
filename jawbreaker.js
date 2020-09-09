@@ -12,9 +12,9 @@ function generateBoard(rows, columns, colors) {
   h = rows;
   w = columns;
   gameBoard = [];
-  for (let i = 0; i < rows; i++) {
+  for (let i = 0; i < columns; i++) {
     gameBoard[i] = [];
-    for (let j = 0; j < columns; j++) {
+    for (let j = 0; j < rows; j++) {
       gameBoard[i][j] = Math.floor(Math.random() * colors);
     }
   }
@@ -27,9 +27,10 @@ function updateScore(nBalls) {
 function select(x, y) {
   let board = cloneBoard(gameBoard);
   let chain = deleteChain(x, y, board);
-  if (chain === null || chain.length === 0) return;
+  if (chain === null || chain.length < 2) return;
   updateBoard(board, chain);
   updateScore(chain.length);
+  printBoard(gameBoard);
 }
 
 function checkPoint(x, y, board) {
@@ -85,7 +86,7 @@ function updateBoard(board, chain) {
     tempNr;
 
   for (let i = 0; i < chainLength; i++) {
-    tempNr = chain[i][1];
+    tempNr = chain[i][0];
     if (notInclude(tempNr, columnsToUpdate)) {
       columnsToUpdate[columnsToUpdateLength++] = tempNr;
     }
@@ -93,6 +94,7 @@ function updateBoard(board, chain) {
   for (let i = 0; i < columnsToUpdateLength; i++) {
     moveDown(columnsToUpdate[i], board);
   }
+  board = moveLeft(board);
   gameBoard = board;
 }
 
@@ -105,27 +107,37 @@ function notInclude(val, arr) {
 }
 
 function moveDown(columnNr, board) {
-  const maxHeight = h - 1;
   let val;
-  for (let i = maxHeight; i > 0; i--) {
-    if (board[i][columnNr] === null) {
+  for (let i = 0; i < h; i++) {
+    if (board[columnNr][i] === null) {
       val = findUpperVal(columnNr, i, board);
       if (val === null) return;
-      board[i][columnNr] = val;
+      board[columnNr][i] = val;
     }
   }
 }
 
 function findUpperVal(columnNr, height, board) {
   let val = null;
-  for (let i = height - 1; i >= 0; i--) {
-    val = board[i][columnNr];
+  for (let i = height; i < h; i++) {
+    val = board[columnNr][i];
     if (val !== null) {
-      board[i][columnNr] = null;
+      board[columnNr][i] = null;
       return val;
     }
   }
   return val;
+}
+
+function moveLeft(board) {
+  let res = [],
+    resLength = 0,
+    columnsAmount = board.length;
+  for (let i = 0; i < columnsAmount; i++) {
+    if (board[i][0] !== null) res[resLength++] = board[i];
+  }
+  w = resLength;
+  return res;
 }
 
 function findAllChains() {
@@ -138,12 +150,27 @@ function findAllChains() {
 
   for (i = w - 1; i >= 0; i--) {
     for (j = h - 1; j >= 0; j--) {
-      point = checkPoint(j, i, board);
+      point = checkPoint(i, j, board);
       if (point.length > 0) {
-        res[resLength++] = [j, i];
-        deleteChain(j, i, board);
+        res[resLength++] = [i, j];
+        deleteChain(i, j, board);
       }
     }
   }
   return res;
+}
+
+function printBoard(board) {
+  let line = "",
+    val;
+
+  for (let i = h - 1; i >= 0; i--) {
+    for (let j = 0; j < w; j++) {
+      val = board[j][i];
+      if (val === null) val = " ";
+      line += ` ${val}`;
+    }
+    console.log(line);
+    line = "";
+  }
 }
