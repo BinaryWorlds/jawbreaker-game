@@ -1,16 +1,18 @@
 let gameBoard = [],
   h,
   w,
+  wStart,
   score = 0;
 
 function newGame(rows, columns, colors) {
   score = 0;
   generateBoard(rows, columns, colors);
+  initCanvas();
 }
 
 function generateBoard(rows, columns, colors) {
   h = rows;
-  w = columns;
+  wStart = w = columns;
   gameBoard = [];
   for (let i = 0; i < columns; i++) {
     gameBoard[i] = [];
@@ -27,10 +29,10 @@ function updateScore(nBalls) {
 function select(x, y) {
   let board = cloneBoard(gameBoard);
   let chain = deleteChain(x, y, board);
-  if (chain === null || chain.length < 2) return;
+  if (chain === null || chain.length < 2) return false;
   updateBoard(board, chain);
   updateScore(chain.length);
-  printBoard(gameBoard);
+  // printBoard(gameBoard); // console log game after every select
 }
 
 function checkPoint(x, y, board) {
@@ -174,3 +176,108 @@ function printBoard(board) {
     line = "";
   }
 }
+
+let timerId;
+
+function symulateGame() {
+  let chains = findAllChains(),
+    chainsLength = chains.length;
+  if (chainsLength === 0) return console.log("END");
+  let randomTime = Math.random() * 1500 + 1500,
+    randomChainNr = Math.floor(Math.random() * chainsLength),
+    [x, y] = chains[randomChainNr];
+  select(x, y);
+  loadBalls(gameBoard);
+  timerId = setTimeout(symulateGame, randomTime);
+}
+
+function stopSymulate() {
+  clearTimeout(timerId);
+}
+/****************************/
+let sizeBall = 50,
+  width,
+  height,
+  space,
+  canvas,
+  ctx,
+  images = {};
+
+function calcBoardSize() {
+  space = Math.floor(sizeBall * 0.15);
+  width = space + w * (sizeBall + space);
+  height = space + h * (sizeBall + space);
+}
+
+function initCanvas() {
+  calcBoardSize();
+  canvas = document.getElementById("gameArea");
+  canvas.width = width;
+  canvas.height = height;
+  if (!canvas.getContext("2d")) return alert("ERROR");
+  ctx = canvas.getContext("2d");
+  loadBalls(gameBoard);
+}
+
+function imageSrc(nr) {
+  return `./images/${nr}.png`;
+}
+
+function loadBalls(board) {
+  let columns = board.length,
+    imagesNr = 0,
+    val;
+  images = {};
+  images.loaded = 0;
+
+  for (let i = h - 1; i >= 0; i--) {
+    for (let j = 0; j < columns; j++) {
+      val = board[j][i];
+      if (val === null) continue;
+      images[imagesNr] = {};
+      images[imagesNr].x = j;
+      images[imagesNr].y = i;
+      images[imagesNr].img = new Image();
+      images[imagesNr].img.onload = function () {
+        if (++images.loaded >= images.toLoad) ctxDraw();
+      };
+      images[imagesNr++].img.src = imageSrc(val);
+    }
+  }
+  images.toLoad = imagesNr;
+}
+
+function ctxDraw() {
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#f0f0f0";
+  ctx.fillRect(0, 0, width, height);
+  for (let i = 0; i < images.toLoad; i++) {
+    let img = images[i];
+    ctx.drawImage(
+      img.img,
+      space + img.x * (sizeBall + space),
+      height - (img.y + 1) * (sizeBall + space),
+      sizeBall,
+      sizeBall
+    );
+  }
+}
+
+document.addEventListener("mousedown", mouseHandler);
+function mouseHandler(e) {
+  let mouseX = e.clientX - canvas.offsetLeft,
+    mouseY = e.clientY - canvas.offsetTop,
+    x,
+    y;
+  if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height) return;
+  x = width / wStart;
+  x = Math.floor(mouseX / x);
+  if (x >= w) return;
+  y = height / h;
+  y = h - 1 - Math.floor(mouseY / y);
+  let clicked = select(x, y);
+  if (clicked === false) return;
+  loadBalls(gameBoard);
+}
+
+newGame(9, 9, 5);
