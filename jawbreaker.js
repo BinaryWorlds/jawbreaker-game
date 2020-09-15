@@ -2,10 +2,12 @@ let gameBoard = [],
   h,
   w,
   wStart,
-  score = 0;
+  score = 0,
+  timerId;
 
-function newGame(rows, columns, colors) {
+function newGame(rows, columns, colors, setSizeBall = 50) {
   score = 0;
+  sizeBall = setSizeBall;
   generateBoard(rows, columns, colors);
   initCanvas();
 }
@@ -27,8 +29,8 @@ function updateScore(nBalls) {
 }
 
 function select(x, y) {
-  let board = cloneBoard(gameBoard);
-  let chain = deleteChain(x, y, board);
+  const board = cloneBoard(gameBoard),
+    chain = deleteChain(x, y, board);
   if (chain === null || chain.length < 2) return false;
   updateBoard(board, chain);
   updateScore(chain.length);
@@ -36,10 +38,10 @@ function select(x, y) {
 }
 
 function checkPoint(x, y, board) {
-  let res = [],
-    resLength = 0;
-  const color = board[x][y];
+  const res = [],
+    color = board[x][y];
   if (color === null) return res;
+  let resLength = 0;
   if (x > 0 && color === board[x - 1][y]) res[resLength++] = [x - 1, y];
   if (x < w - 1 && color === board[x + 1][y]) res[resLength++] = [x + 1, y];
   if (y > 0 && color === board[x][y - 1]) res[resLength++] = [x, y - 1];
@@ -49,18 +51,18 @@ function checkPoint(x, y, board) {
 }
 
 function deleteChain(x, y, board) {
-  let res = [],
-    resLength,
-    deepRes = [],
-    deepResLength,
-    chain = [[]],
-    chainLength = 1;
-  if (board[x][y] === null) return res;
-  res = checkPoint(x, y, board);
-  chain[0] = [x, y];
+  if (board[x][y] === null) return [];
+
+  const res = checkPoint(x, y, board),
+    resLength = res.length,
+    chain = [[x, y]];
+
   board[x][y] = null;
-  resLength = res.length;
   if (resLength === 0) return chain;
+
+  let deepRes = [],
+    deepResLength,
+    chainLength = 1;
   for (let i = 0; i < resLength; i++) {
     deepRes = deleteChain(res[i][0], res[i][1], board);
     deepResLength = deepRes.length;
@@ -73,8 +75,9 @@ function deleteChain(x, y, board) {
 }
 
 function cloneBoard(arr) {
-  const arrLength = arr.length;
-  let res = [];
+  const res = [],
+    arrLength = arr.length;
+
   for (let i = 0; i < arrLength; i++) {
     res[i] = arr[i].slice(0);
   }
@@ -82,9 +85,9 @@ function cloneBoard(arr) {
 }
 
 function updateBoard(board, chain) {
-  let columnsToUpdate = [],
-    columnsToUpdateLength = 0,
-    chainLength = chain.length,
+  const columnsToUpdate = [],
+    chainLength = chain.length;
+  let columnsToUpdateLength = 0,
     tempNr;
 
   for (let i = 0; i < chainLength; i++) {
@@ -96,8 +99,7 @@ function updateBoard(board, chain) {
   for (let i = 0; i < columnsToUpdateLength; i++) {
     moveDown(columnsToUpdate[i], board);
   }
-  board = moveLeft(board);
-  gameBoard = board;
+  gameBoard = moveLeft(board);
 }
 
 function notInclude(val, arr) {
@@ -132,9 +134,9 @@ function findUpperVal(columnNr, height, board) {
 }
 
 function moveLeft(board) {
-  let res = [],
-    resLength = 0,
+  const res = [],
     columnsAmount = board.length;
+  let resLength = 0;
   for (let i = 0; i < columnsAmount; i++) {
     if (board[i][0] !== null) res[resLength++] = board[i];
   }
@@ -143,9 +145,9 @@ function moveLeft(board) {
 }
 
 function findAllChains() {
-  let board = cloneBoard(gameBoard);
-  let res = [],
-    resLength = 0,
+  const board = cloneBoard(gameBoard),
+    res = [];
+  let resLength = 0,
     point,
     i,
     j;
@@ -177,13 +179,12 @@ function printBoard(board) {
   }
 }
 
-let timerId;
-
 function symulateGame() {
-  let chains = findAllChains(),
+  const chains = findAllChains(),
     chainsLength = chains.length;
+
   if (chainsLength === 0) return console.log("END");
-  let randomTime = Math.random() * 1500 + 1500,
+  const randomTime = Math.random() * 1500 + 1500,
     randomChainNr = Math.floor(Math.random() * chainsLength),
     [x, y] = chains[randomChainNr];
   select(x, y);
@@ -195,13 +196,14 @@ function stopSymulate() {
   clearTimeout(timerId);
 }
 /****************************/
-let sizeBall = 50,
+let sizeBall,
   width,
   height,
   space,
   canvas,
   ctx,
-  images = {};
+  images = {},
+  lastSelectedChain = [];
 
 function calcBoardSize() {
   space = Math.floor(sizeBall * 0.15);
@@ -224,14 +226,16 @@ function imageSrc(nr) {
 }
 
 function loadBalls(board) {
-  let columns = board.length,
-    imagesNr = 0,
-    val;
+  const columns = board.length;
+  let imagesNr = 0,
+    val,
+    j;
+
   images = {};
   images.loaded = 0;
 
   for (let i = h - 1; i >= 0; i--) {
-    for (let j = 0; j < columns; j++) {
+    for (j = 0; j < columns; j++) {
       val = board[j][i];
       if (val === null) continue;
       images[imagesNr] = {};
@@ -248,11 +252,13 @@ function loadBalls(board) {
 }
 
 function ctxDraw() {
+  let img;
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#f0f0f0";
   ctx.fillRect(0, 0, width, height);
+  highlightSelected(lastSelectedChain);
   for (let i = 0; i < images.toLoad; i++) {
-    let img = images[i];
+    img = images[i];
     ctx.drawImage(
       img.img,
       space + img.x * (sizeBall + space),
@@ -264,20 +270,74 @@ function ctxDraw() {
 }
 
 document.addEventListener("mousedown", mouseHandler);
+
 function mouseHandler(e) {
-  let mouseX = e.clientX - canvas.offsetLeft,
-    mouseY = e.clientY - canvas.offsetTop,
-    x,
-    y;
+  const mouseX = e.clientX - canvas.offsetLeft,
+    mouseY = e.clientY - canvas.offsetTop;
   if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height) return;
-  x = width / wStart;
+  let x = width / wStart;
   x = Math.floor(mouseX / x);
   if (x >= w) return;
-  y = height / h;
+  let y = height / h;
   y = h - 1 - Math.floor(mouseY / y);
-  let clicked = select(x, y);
-  if (clicked === false) return;
+
+  clickLogic(x, y);
+}
+
+function clickLogic(x, y) {
+  const isHighlighted = findPointInChain(x, y);
+  if (isHighlighted === true) {
+    select(x, y);
+    lastSelectedChain = null;
+  } else {
+    const board = cloneBoard(gameBoard),
+      chain = deleteChain(x, y, board);
+    if (chain === null || chain.length < 2) lastSelectedChain = null;
+    else lastSelectedChain = chain;
+  }
   loadBalls(gameBoard);
+}
+
+function findPointInChain(x, y) {
+  if (lastSelectedChain === null) return false;
+  const length = lastSelectedChain.length;
+  let chckX, chckY;
+  for (let i = 0; i < length; i++) {
+    [chckX, chckY] = lastSelectedChain[i];
+    if (x === chckX && y === chckY) return true;
+  }
+
+  return false;
+}
+
+function highlightSelected() {
+  if (lastSelectedChain === null) return;
+  const chainLength = lastSelectedChain.length;
+  let x1, y1, x2, y2, temp, tempLength, j;
+  ctx.beginPath();
+  for (let i = 0; i < chainLength; i++) {
+    [x1, y1] = lastSelectedChain[i];
+    temp = checkPoint(x1, y1, gameBoard);
+    [x1, y1] = calcPosition(x1, y1);
+    tempLength = temp.length;
+    for (j = 0; j < tempLength; j++) {
+      ctx.moveTo(x1, y1);
+      [x2, y2] = temp[j];
+      ctx.lineTo(...calcPosition(x2, y2));
+    }
+  }
+
+  ctx.lineWidth = sizeBall + space;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(54, 175, 236, 0.4)";
+  ctx.stroke();
+}
+
+function calcPosition(x, y) {
+  const xPx = (x + 1) * (sizeBall + space) - sizeBall / 2,
+    yPx = (h - y) * (sizeBall + space) - sizeBall / 2;
+  return [xPx, yPx];
 }
 
 newGame(9, 9, 5);
