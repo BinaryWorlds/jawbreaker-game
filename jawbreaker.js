@@ -2,6 +2,8 @@ let gameBoard = [],
   h,
   w,
   wStart,
+  hStart,
+  colorsStart,
   score = 0,
   timerId;
 
@@ -10,11 +12,14 @@ function newGame(rows, columns, colors, setSizeBall = 50) {
   sizeBall = setSizeBall;
   generateBoard(rows, columns, colors);
   initCanvas();
+  document.removeEventListener("mousedown", resetGame);
+  document.addEventListener("mousedown", mouseHandler);
 }
 
 function generateBoard(rows, columns, colors) {
-  h = rows;
+  hStart = h = rows;
   wStart = w = columns;
+  colorsStart = colors;
   gameBoard = [];
   for (let i = 0; i < columns; i++) {
     gameBoard[i] = [];
@@ -31,7 +36,7 @@ function updateScore(nBalls) {
 function select(x, y) {
   const board = cloneBoard(gameBoard),
     chain = deleteChain(x, y, board);
-  if (chain === null || chain.length < 2) return false;
+  if (chain === null || chain.length < 2) return;
   updateBoard(board, chain);
   updateScore(chain.length);
   // printBoard(gameBoard); // console log game after every select
@@ -144,7 +149,8 @@ function moveLeft(board) {
   return res;
 }
 
-function findAllChains() {
+function findChains(mode) {
+  // if mode === 1 find one chain; else find all chains
   const board = cloneBoard(gameBoard),
     res = [];
   let resLength = 0,
@@ -157,6 +163,7 @@ function findAllChains() {
       point = checkPoint(i, j, board);
       if (point.length > 0) {
         res[resLength++] = [i, j];
+        if (mode === 1) return res;
         deleteChain(i, j, board);
       }
     }
@@ -179,26 +186,35 @@ function printBoard(board) {
   }
 }
 
-function symulateGame() {
-  const chains = findAllChains(),
-    chainsLength = chains.length;
+function symulateGame(x, y) {
+  document.removeEventListener("mousedown", mouseHandler);
+  const randomTime = Math.random() * 750 + 750;
 
-  if (chainsLength === 0) return console.log("END");
-  const randomTime = Math.random() * 1500 + 1500,
-    randomChainNr = Math.floor(Math.random() * chainsLength),
+  if (x === undefined) {
+    const chains = findChains(),
+      chainsLength = chains.length;
+    if (chainsLength === 0) {
+      resetGame();
+      return symulateGame();
+    }
+    const randomChainNr = Math.floor(Math.random() * chainsLength);
     [x, y] = chains[randomChainNr];
-  select(x, y);
-  loadBalls(gameBoard);
-  timerId = setTimeout(symulateGame, randomTime);
+    timerId = setTimeout(symulateGame, randomTime, x, y);
+  } else timerId = setTimeout(symulateGame, randomTime);
+
+  clickLogic(x, y);
+  ctxDraw();
 }
 
 function stopSymulate() {
   clearTimeout(timerId);
+  resetGame();
 }
 /****************************/
 let sizeBall,
   width,
   height,
+  scoreHeight = 50,
   space,
   canvas,
   ctx,
@@ -208,7 +224,7 @@ let sizeBall,
 function calcBoardSize() {
   space = Math.floor(sizeBall * 0.15);
   width = space + w * (sizeBall + space);
-  height = space + h * (sizeBall + space);
+  height = space + h * (sizeBall + space) + scoreHeight;
 }
 
 function initCanvas() {
@@ -216,60 +232,58 @@ function initCanvas() {
   canvas = document.getElementById("gameArea");
   canvas.width = width;
   canvas.height = height;
-  if (!canvas.getContext("2d")) return alert("ERROR");
+  if (!canvas.getContext && !canvas.getContext("2d")) return alert("ERROR");
   ctx = canvas.getContext("2d");
-  loadBalls(gameBoard);
+  preloadImages();
 }
 
 function imageSrc(nr) {
   return `./images/${nr}.png`;
 }
 
-function loadBalls(board) {
-  const columns = board.length;
-  let imagesNr = 0,
-    val,
-    j;
-
+function preloadImages() {
   images = {};
   images.loaded = 0;
-
-  for (let i = h - 1; i >= 0; i--) {
-    for (j = 0; j < columns; j++) {
-      val = board[j][i];
-      if (val === null) continue;
-      images[imagesNr] = {};
-      images[imagesNr].x = j;
-      images[imagesNr].y = i;
-      images[imagesNr].img = new Image();
-      images[imagesNr].img.onload = function () {
-        if (++images.loaded >= images.toLoad) ctxDraw();
-      };
-      images[imagesNr++].img.src = imageSrc(val);
-    }
+  for (let i = 0; i < colorsStart; i++) {
+    images[i] = new Image();
+    images[i].onload = function () {
+      if (++images.loaded >= colorsStart) ctxDraw();
+    };
+    images[i].src = imageSrc(i);
   }
-  images.toLoad = imagesNr;
 }
 
 function ctxDraw() {
-  let img;
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#f0f0f0";
-  ctx.fillRect(0, 0, width, height);
-  highlightSelected(lastSelectedChain);
-  for (let i = 0; i < images.toLoad; i++) {
-    img = images[i];
-    ctx.drawImage(
-      img.img,
-      space + img.x * (sizeBall + space),
-      height - (img.y + 1) * (sizeBall + space),
-      sizeBall,
-      sizeBall
-    );
-  }
+  ctx.fillRect(0, scoreHeight, width, height - scoreHeight);
+  ctx.font = `${scoreHeight * 0.8}px Comic Sans MS`;
+  ctx.fillStyle = "black";
+  ctx.fillText(`Score : ${score}`, scoreHeight, scoreHeight * 0.8);
+
+  highlightSelected();
+  loadBalls();
+  if (lastSelectedChain === null) checkItIsOver();
 }
 
-document.addEventListener("mousedown", mouseHandler);
+function loadBalls() {
+  const columns = gameBoard.length;
+  let val, y;
+
+  for (let x = 0; x < columns; x++) {
+    for (y = 0; y < h; y++) {
+      val = gameBoard[x][y];
+      if (val === null) break;
+      ctx.drawImage(
+        images[val],
+        space + x * (sizeBall + space),
+        height - (y + 1) * (sizeBall + space),
+        sizeBall,
+        sizeBall
+      );
+    }
+  }
+}
 
 function mouseHandler(e) {
   const mouseX = e.clientX - canvas.offsetLeft,
@@ -277,15 +291,22 @@ function mouseHandler(e) {
   if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height) return;
   let x = width / wStart;
   x = Math.floor(mouseX / x);
-  if (x >= w) return;
-  let y = height / h;
-  y = h - 1 - Math.floor(mouseY / y);
-
+  let y = (height - scoreHeight) / h;
+  y = h - 1 - Math.floor((mouseY - scoreHeight) / y);
+  if (y >= h) return;
   clickLogic(x, y);
 }
 
 function clickLogic(x, y) {
-  const isHighlighted = findPointInChain(x, y);
+  if (x >= gameBoard.length) {
+    if (lastSelectedChain !== null) {
+      lastSelectedChain = null;
+      ctxDraw();
+    }
+    return;
+  }
+  const preventUpdate = lastSelectedChain === null ? true : false,
+    isHighlighted = findPointInChain(x, y);
   if (isHighlighted === true) {
     select(x, y);
     lastSelectedChain = null;
@@ -295,7 +316,9 @@ function clickLogic(x, y) {
     if (chain === null || chain.length < 2) lastSelectedChain = null;
     else lastSelectedChain = chain;
   }
-  loadBalls(gameBoard);
+
+  if (lastSelectedChain === null && preventUpdate === true) return;
+  ctxDraw();
 }
 
 function findPointInChain(x, y) {
@@ -336,8 +359,32 @@ function highlightSelected() {
 
 function calcPosition(x, y) {
   const xPx = (x + 1) * (sizeBall + space) - sizeBall / 2,
-    yPx = (h - y) * (sizeBall + space) - sizeBall / 2;
+    yPx = (h - y) * (sizeBall + space) + scoreHeight - sizeBall / 2;
   return [xPx, yPx];
 }
 
-newGame(9, 9, 5);
+function checkItIsOver() {
+  const chain = findChains(1); //find one
+  if (chain.length === 0) {
+    document.removeEventListener("mousedown", mouseHandler);
+    document.addEventListener("mousedown", resetGame);
+
+    ctx.clearRect(0, 0, width, scoreHeight);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.fillRect(0, 0, width, height);
+    const txtSize = Math.floor(width / 8);
+    ctx.font = `${txtSize}px Comic Sans MS`;
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText("Game over!", width / 2, height / 3);
+    ctx.font = `${txtSize / 2}px Comic Sans MS`;
+    ctx.fillText(`Score: ${score}`, width / 2, height / 2);
+    ctx.fillText("click to reset", width / 2, (height * 2) / 3);
+  }
+}
+
+function resetGame() {
+  newGame(hStart, wStart, colorsStart, sizeBall);
+}
+
+newGame(12, 12, 5, 50);
