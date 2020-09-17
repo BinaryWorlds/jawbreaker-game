@@ -1,40 +1,58 @@
-let gameBoard = [],
-  h,
-  w,
-  wStart,
-  hStart,
-  colorsStart,
-  score = 0,
-  timerId;
+// https://github.com/BinaryWorlds/jawbreaker-game
 
-function newGame(rows, columns, colors, setSizeBall = 50) {
-  score = 0;
-  sizeBall = setSizeBall;
-  generateBoard(rows, columns, colors);
+let g = {
+  rows: null,
+  rowsInit: null,
+  columns: null,
+  columnsInit: null,
+  colorsInit: null,
+  score: 0,
+  timerId: null,
+  ballSize: null,
+  width: null,
+  height: null,
+  scoreHeight: 50,
+  space: null,
+  canvas: null,
+  ctx: null,
+  img: {},
+  lastSelectedChain: [],
+  board: [],
+  symulateMode: false,
+};
+
+function imageSrc(nr) {
+  return `./images/${nr}.png`;
+}
+
+function newGame(rows, columns, colors, ballSize = 60) {
+  g.score = 0;
+  g.rowsInit = g.rows = rows;
+  g.columnsInit = g.columns = columns;
+  g.colorsInit = colors;
+  g.ballSize = ballSize;
+  generateBoard();
   initCanvas();
   document.removeEventListener("mousedown", resetGame);
   document.addEventListener("mousedown", mouseHandler);
 }
 
-function generateBoard(rows, columns, colors) {
-  hStart = h = rows;
-  wStart = w = columns;
-  colorsStart = colors;
-  gameBoard = [];
-  for (let i = 0; i < columns; i++) {
-    gameBoard[i] = [];
-    for (let j = 0; j < rows; j++) {
-      gameBoard[i][j] = Math.floor(Math.random() * colors);
+function generateBoard() {
+  g.board = [];
+  for (let x = 0; x < g.columns; x++) {
+    g.board[x] = [];
+    for (let y = 0; y < g.rows; y++) {
+      g.board[x][y] = Math.floor(Math.random() * g.colorsInit);
     }
   }
 }
 
 function updateScore(nBalls) {
-  score += nBalls * (nBalls - 1);
+  g.score += nBalls * (nBalls - 1);
 }
 
 function select(x, y) {
-  const board = cloneBoard(gameBoard),
+  const board = cloneBoard(g.board),
     chain = deleteChain(x, y, board);
   if (chain === null || chain.length < 2) return;
   updateBoard(board, chain);
@@ -48,9 +66,9 @@ function checkPoint(x, y, board) {
   if (color === null) return res;
   let resLength = 0;
   if (x > 0 && color === board[x - 1][y]) res[resLength++] = [x - 1, y];
-  if (x < w - 1 && color === board[x + 1][y]) res[resLength++] = [x + 1, y];
+  if (x < g.columns - 1 && color === board[x + 1][y]) res[resLength++] = [x + 1, y];
   if (y > 0 && color === board[x][y - 1]) res[resLength++] = [x, y - 1];
-  if (y < h - 1 && color === board[x][y + 1]) res[resLength++] = [x, y + 1];
+  if (y < g.rows - 1 && color === board[x][y + 1]) res[resLength++] = [x, y + 1];
 
   return res;
 }
@@ -104,7 +122,7 @@ function updateBoard(board, chain) {
   for (let i = 0; i < columnsToUpdateLength; i++) {
     moveDown(columnsToUpdate[i], board);
   }
-  gameBoard = moveLeft(board);
+  g.board = moveLeft(board);
 }
 
 function notInclude(val, arr) {
@@ -117,7 +135,7 @@ function notInclude(val, arr) {
 
 function moveDown(columnNr, board) {
   let val;
-  for (let i = 0; i < h; i++) {
+  for (let i = 0; i < g.rows; i++) {
     if (board[columnNr][i] === null) {
       val = findUpperVal(columnNr, i, board);
       if (val === null) return;
@@ -128,7 +146,7 @@ function moveDown(columnNr, board) {
 
 function findUpperVal(columnNr, height, board) {
   let val = null;
-  for (let i = height; i < h; i++) {
+  for (let i = height; i < g.rows; i++) {
     val = board[columnNr][i];
     if (val !== null) {
       board[columnNr][i] = null;
@@ -145,26 +163,25 @@ function moveLeft(board) {
   for (let i = 0; i < columnsAmount; i++) {
     if (board[i][0] !== null) res[resLength++] = board[i];
   }
-  w = resLength;
+  g.columns = resLength;
   return res;
 }
 
 function findChains(mode) {
   // if mode === 1 find one chain; else find all chains
-  const board = cloneBoard(gameBoard),
+  const board = cloneBoard(g.board),
     res = [];
   let resLength = 0,
     point,
-    i,
-    j;
+    y;
 
-  for (i = w - 1; i >= 0; i--) {
-    for (j = h - 1; j >= 0; j--) {
-      point = checkPoint(i, j, board);
+  for (let x = 0; x < g.columns; x++) {
+    for (y = 0; y < g.rows; y++) {
+      point = checkPoint(x, y, board);
       if (point.length > 0) {
-        res[resLength++] = [i, j];
+        res[resLength++] = [x, y];
         if (mode === 1) return res;
-        deleteChain(i, j, board);
+        deleteChain(x, y, board);
       }
     }
   }
@@ -173,11 +190,12 @@ function findChains(mode) {
 
 function printBoard(board) {
   let line = "",
-    val;
+    val,
+    x;
 
-  for (let i = h - 1; i >= 0; i--) {
-    for (let j = 0; j < w; j++) {
-      val = board[j][i];
+  for (let y = g.rows - 1; y >= 0; y--) {
+    for (x = 0; x < g.columns; x++) {
+      val = board[x][y];
       if (val === null) val = " ";
       line += ` ${val}`;
     }
@@ -185,9 +203,14 @@ function printBoard(board) {
     line = "";
   }
 }
+function startSymulate() {
+  if (g.symulateMode === true) return;
+  g.symulateMode = true;
+  document.removeEventListener("mousedown", mouseHandler);
+  symulateGame();
+}
 
 function symulateGame(x, y) {
-  document.removeEventListener("mousedown", mouseHandler);
   const randomTime = Math.random() * 750 + 750;
 
   if (x === undefined) {
@@ -195,138 +218,129 @@ function symulateGame(x, y) {
       chainsLength = chains.length;
     if (chainsLength === 0) {
       resetGame();
-      return symulateGame();
+      g.symulateMode = false;
+      return startSymulate();
     }
     const randomChainNr = Math.floor(Math.random() * chainsLength);
     [x, y] = chains[randomChainNr];
-    timerId = setTimeout(symulateGame, randomTime, x, y);
-  } else timerId = setTimeout(symulateGame, randomTime);
+    g.timerId = setTimeout(symulateGame, randomTime, x, y);
+  } else g.timerId = setTimeout(symulateGame, randomTime);
 
   clickLogic(x, y);
   ctxDraw();
 }
 
 function stopSymulate() {
-  clearTimeout(timerId);
+  g.symulateMode = false;
+  clearTimeout(g.timerId);
   resetGame();
 }
 /****************************/
-let sizeBall,
-  width,
-  height,
-  scoreHeight = 50,
-  space,
-  canvas,
-  ctx,
-  images = {},
-  lastSelectedChain = [];
 
 function calcBoardSize() {
-  space = Math.floor(sizeBall * 0.15);
-  width = space + w * (sizeBall + space);
-  height = space + h * (sizeBall + space) + scoreHeight;
+  g.space = Math.floor(g.ballSize * 0.15);
+  g.width = g.space + g.columns * (g.ballSize + g.space);
+  g.height = g.space + g.rows * (g.ballSize + g.space) + g.scoreHeight;
 }
 
 function initCanvas() {
   calcBoardSize();
-  canvas = document.getElementById("gameArea");
-  canvas.width = width;
-  canvas.height = height;
-  if (!canvas.getContext && !canvas.getContext("2d")) return alert("ERROR");
-  ctx = canvas.getContext("2d");
+  g.canvas = document.getElementById("gameArea");
+  g.canvas.width = g.width;
+  g.canvas.height = g.height;
+  if (!g.canvas.getContext && !g.canvas.getContext("2d")) return alert("ERROR");
+  g.ctx = g.canvas.getContext("2d");
   preloadImages();
 }
 
-function imageSrc(nr) {
-  return `./images/${nr}.png`;
-}
-
 function preloadImages() {
-  images = {};
-  images.loaded = 0;
-  for (let i = 0; i < colorsStart; i++) {
-    images[i] = new Image();
-    images[i].onload = function () {
-      if (++images.loaded >= colorsStart) ctxDraw();
+  g.img = {};
+  g.img.loaded = 0;
+  for (let i = 0; i < g.colorsInit; i++) {
+    g.img[i] = new Image();
+    g.img[i].onload = function () {
+      if (++g.img.loaded >= g.colorsInit) ctxDraw();
     };
-    images[i].src = imageSrc(i);
+    g.img[i].src = imageSrc(i);
   }
 }
 
 function ctxDraw() {
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#f0f0f0";
-  ctx.fillRect(0, scoreHeight, width, height - scoreHeight);
-  ctx.font = `${scoreHeight * 0.8}px Comic Sans MS`;
-  ctx.fillStyle = "black";
-  ctx.fillText(`Score : ${score}`, scoreHeight, scoreHeight * 0.8);
+  g.ctx.clearRect(0, 0, g.width, g.height);
+  g.ctx.fillStyle = "#f0f0f0";
+  g.ctx.fillRect(0, g.scoreHeight, g.width, g.height - g.scoreHeight);
+  g.ctx.font = `${g.scoreHeight * 0.8}px Comic Sans MS`;
+  g.ctx.fillStyle = "black";
+  g.ctx.fillText(`Score : ${g.score}`, g.scoreHeight, g.scoreHeight * 0.8);
+  g.ctx.fillStyle = "rgba(54, 175, 236, 0.4)";
+  g.ctx.fillText("gh: BinaryWorlds", 25, g.scoreHeight * 2);
 
   highlightSelected();
   loadBalls();
-  if (lastSelectedChain === null) checkItIsOver();
+  if (g.lastSelectedChain === null) checkItIsOver();
 }
 
 function loadBalls() {
-  const columns = gameBoard.length;
+  const columns = g.board.length;
   let val, y;
 
   for (let x = 0; x < columns; x++) {
-    for (y = 0; y < h; y++) {
-      val = gameBoard[x][y];
+    for (y = 0; y < g.rows; y++) {
+      val = g.board[x][y];
       if (val === null) break;
-      ctx.drawImage(
-        images[val],
-        space + x * (sizeBall + space),
-        height - (y + 1) * (sizeBall + space),
-        sizeBall,
-        sizeBall
+      g.ctx.drawImage(
+        g.img[val],
+        g.space + x * (g.ballSize + g.space),
+        g.height - (y + 1) * (g.ballSize + g.space),
+        g.ballSize,
+        g.ballSize
       );
     }
   }
 }
 
 function mouseHandler(e) {
-  const mouseX = e.clientX - canvas.offsetLeft,
-    mouseY = e.clientY - canvas.offsetTop;
-  if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height) return;
-  let x = width / wStart;
+  const mouseX = e.clientX - g.canvas.offsetLeft,
+    mouseY = e.clientY - g.canvas.offsetTop;
+  if (mouseX < 0 || mouseY < 0 || mouseX > g.width || mouseY > g.height) return;
+  let x = g.width / g.columnsInit;
   x = Math.floor(mouseX / x);
-  let y = (height - scoreHeight) / h;
-  y = h - 1 - Math.floor((mouseY - scoreHeight) / y);
-  if (y >= h) return;
+  let y = (g.height - g.scoreHeight) / g.rows;
+  y = g.rows - 1 - Math.floor((mouseY - g.scoreHeight) / y);
+  if (y >= g.rows) return;
   clickLogic(x, y);
 }
 
 function clickLogic(x, y) {
-  if (x >= gameBoard.length) {
-    if (lastSelectedChain !== null) {
-      lastSelectedChain = null;
+  if (x >= g.columns) {
+    if (g.lastSelectedChain !== null) {
+      g.lastSelectedChain = null;
       ctxDraw();
     }
     return;
   }
-  const preventUpdate = lastSelectedChain === null ? true : false,
+  const preventUpdate = g.lastSelectedChain === null ? true : false,
     isHighlighted = findPointInChain(x, y);
   if (isHighlighted === true) {
     select(x, y);
-    lastSelectedChain = null;
+    g.lastSelectedChain = null;
   } else {
-    const board = cloneBoard(gameBoard),
+    const board = cloneBoard(g.board),
       chain = deleteChain(x, y, board);
-    if (chain === null || chain.length < 2) lastSelectedChain = null;
-    else lastSelectedChain = chain;
+    if (chain === null || chain.length < 2) g.lastSelectedChain = null;
+    else g.lastSelectedChain = chain;
   }
 
-  if (lastSelectedChain === null && preventUpdate === true) return;
+  if (g.lastSelectedChain === null && preventUpdate === true) return;
   ctxDraw();
 }
 
 function findPointInChain(x, y) {
-  if (lastSelectedChain === null) return false;
-  const length = lastSelectedChain.length;
+  if (g.lastSelectedChain === null) return false;
+  const length = g.lastSelectedChain.length;
   let chckX, chckY;
   for (let i = 0; i < length; i++) {
-    [chckX, chckY] = lastSelectedChain[i];
+    [chckX, chckY] = g.lastSelectedChain[i];
     if (x === chckX && y === chckY) return true;
   }
 
@@ -334,32 +348,32 @@ function findPointInChain(x, y) {
 }
 
 function highlightSelected() {
-  if (lastSelectedChain === null) return;
-  const chainLength = lastSelectedChain.length;
+  if (g.lastSelectedChain === null) return;
+  const chainLength = g.lastSelectedChain.length;
   let x1, y1, x2, y2, temp, tempLength, j;
-  ctx.beginPath();
+  g.ctx.beginPath();
   for (let i = 0; i < chainLength; i++) {
-    [x1, y1] = lastSelectedChain[i];
-    temp = checkPoint(x1, y1, gameBoard);
+    [x1, y1] = g.lastSelectedChain[i];
+    temp = checkPoint(x1, y1, g.board);
     [x1, y1] = calcPosition(x1, y1);
     tempLength = temp.length;
     for (j = 0; j < tempLength; j++) {
-      ctx.moveTo(x1, y1);
+      g.ctx.moveTo(x1, y1);
       [x2, y2] = temp[j];
-      ctx.lineTo(...calcPosition(x2, y2));
+      g.ctx.lineTo(...calcPosition(x2, y2));
     }
   }
 
-  ctx.lineWidth = sizeBall + space;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "rgba(54, 175, 236, 0.4)";
-  ctx.stroke();
+  g.ctx.lineWidth = g.ballSize + g.space;
+  g.ctx.lineCap = "round";
+  g.ctx.lineJoin = "round";
+  g.ctx.strokeStyle = "rgba(54, 175, 236, 0.4)";
+  g.ctx.stroke();
 }
 
 function calcPosition(x, y) {
-  const xPx = (x + 1) * (sizeBall + space) - sizeBall / 2,
-    yPx = (h - y) * (sizeBall + space) + scoreHeight - sizeBall / 2;
+  const xPx = (x + 1) * (g.ballSize + g.space) - g.ballSize / 2,
+    yPx = (g.rows - y) * (g.ballSize + g.space) + g.scoreHeight - g.ballSize / 2;
   return [xPx, yPx];
 }
 
@@ -369,22 +383,22 @@ function checkItIsOver() {
     document.removeEventListener("mousedown", mouseHandler);
     document.addEventListener("mousedown", resetGame);
 
-    ctx.clearRect(0, 0, width, scoreHeight);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-    ctx.fillRect(0, 0, width, height);
-    const txtSize = Math.floor(width / 8);
-    ctx.font = `${txtSize}px Comic Sans MS`;
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    ctx.fillText("Game over!", width / 2, height / 3);
-    ctx.font = `${txtSize / 2}px Comic Sans MS`;
-    ctx.fillText(`Score: ${score}`, width / 2, height / 2);
-    ctx.fillText("click to reset", width / 2, (height * 2) / 3);
+    g.ctx.clearRect(0, 0, g.width, g.scoreHeight);
+    g.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+    g.ctx.fillRect(0, 0, g.width, g.height);
+    const txtSize = Math.floor(g.width / 8);
+    g.ctx.font = `${txtSize}px Comic Sans MS`;
+    g.ctx.fillStyle = "black";
+    g.ctx.textAlign = "center";
+    g.ctx.fillText("Game over!", g.width / 2, g.height / 3);
+    g.ctx.font = `${txtSize / 2}px Comic Sans MS`;
+    g.ctx.fillText(`Score: ${g.score}`, g.width / 2, g.height / 2);
+    g.ctx.fillText("click to reset", g.width / 2, (g.height * 2) / 3);
   }
 }
 
 function resetGame() {
-  newGame(hStart, wStart, colorsStart, sizeBall);
+  newGame(g.rowsInit, g.columnsInit, g.colorsInit, g.ballSize);
 }
 
-newGame(12, 12, 5, 50);
+newGame(12, 12, 5, 60);
