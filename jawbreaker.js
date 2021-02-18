@@ -1,6 +1,6 @@
 // https://github.com/BinaryWorlds/jawbreaker-game
 
-let g = {
+const g = {
   rows: null,
   rowsInit: null,
   columns: null,
@@ -19,13 +19,33 @@ let g = {
   lastSelectedChain: [],
   board: [],
   symulateMode: false,
+  lang: "pl",
+  txt: {
+    en: {
+      score: "Score",
+      gameOver: "Game over!",
+      clickToReset: "click to reset",
+    },
+    pl: {
+      score: "Wynik",
+      gameOver: "Koniec gry!",
+      clickToReset: "kliknij aby zresetować",
+    },
+  },
 };
 
 function imageSrc(nr) {
   return `./images/${nr}.png`;
 }
 
+function changeLang(lang) {
+  if (lang !== "en" && lang !== "pl") return;
+  g.lang = lang;
+  if (g.ctx) ctxDraw();
+}
+
 function newGame(rows, columns, colors, ballSize = 60) {
+  g.lastSelectedChain = [];
   g.score = 0;
   g.rowsInit = g.rows = rows;
   g.columnsInit = g.columns = columns;
@@ -33,8 +53,10 @@ function newGame(rows, columns, colors, ballSize = 60) {
   g.ballSize = ballSize;
   generateBoard();
   initCanvas();
-  document.removeEventListener("mousedown", resetGame);
-  document.addEventListener("mousedown", mouseHandler);
+  if (!g.symulateMode) {
+    document.removeEventListener("mousedown", resetGame);
+    document.addEventListener("mousedown", mouseHandler);
+  }
 }
 
 function generateBoard() {
@@ -52,8 +74,8 @@ function updateScore(nBalls) {
 }
 
 function select(x, y) {
-  const board = cloneBoard(g.board),
-    chain = deleteChain(x, y, board);
+  const board = cloneBoard(g.board);
+  const chain = deleteChain(x, y, board);
   if (chain === null || chain.length < 2) return;
   updateBoard(board, chain);
   updateScore(chain.length);
@@ -61,14 +83,16 @@ function select(x, y) {
 }
 
 function checkPoint(x, y, board) {
-  const res = [],
-    color = board[x][y];
+  const res = [];
+  const color = board[x][y];
   if (color === null) return res;
   let resLength = 0;
   if (x > 0 && color === board[x - 1][y]) res[resLength++] = [x - 1, y];
-  if (x < g.columns - 1 && color === board[x + 1][y]) res[resLength++] = [x + 1, y];
+  if (x < g.columns - 1 && color === board[x + 1][y])
+    res[resLength++] = [x + 1, y];
   if (y > 0 && color === board[x][y - 1]) res[resLength++] = [x, y - 1];
-  if (y < g.rows - 1 && color === board[x][y + 1]) res[resLength++] = [x, y + 1];
+  if (y < g.rows - 1 && color === board[x][y + 1])
+    res[resLength++] = [x, y + 1];
 
   return res;
 }
@@ -76,16 +100,16 @@ function checkPoint(x, y, board) {
 function deleteChain(x, y, board) {
   if (board[x][y] === null) return [];
 
-  const res = checkPoint(x, y, board),
-    resLength = res.length,
-    chain = [[x, y]];
+  const res = checkPoint(x, y, board);
+  const resLength = res.length;
+  const chain = [[x, y]];
 
   board[x][y] = null;
   if (resLength === 0) return chain;
 
-  let deepRes = [],
-    deepResLength,
-    chainLength = 1;
+  let deepRes = [];
+  let deepResLength;
+  let chainLength = 1;
   for (let i = 0; i < resLength; i++) {
     deepRes = deleteChain(res[i][0], res[i][1], board);
     deepResLength = deepRes.length;
@@ -98,8 +122,8 @@ function deleteChain(x, y, board) {
 }
 
 function cloneBoard(arr) {
-  const res = [],
-    arrLength = arr.length;
+  const res = [];
+  const arrLength = arr.length;
 
   for (let i = 0; i < arrLength; i++) {
     res[i] = arr[i].slice(0);
@@ -108,10 +132,10 @@ function cloneBoard(arr) {
 }
 
 function updateBoard(board, chain) {
-  const columnsToUpdate = [],
-    chainLength = chain.length;
-  let columnsToUpdateLength = 0,
-    tempNr;
+  const columnsToUpdate = [];
+  const chainLength = chain.length;
+  let columnsToUpdateLength = 0;
+  let tempNr;
 
   for (let i = 0; i < chainLength; i++) {
     tempNr = chain[i][0];
@@ -126,7 +150,7 @@ function updateBoard(board, chain) {
 }
 
 function notInclude(val, arr) {
-  const length = arr.length;
+  const { length } = arr;
   for (let i = 0; i < length; i++) {
     if (arr[i] === val) return false;
   }
@@ -157,8 +181,8 @@ function findUpperVal(columnNr, height, board) {
 }
 
 function moveLeft(board) {
-  const res = [],
-    columnsAmount = board.length;
+  const res = [];
+  const columnsAmount = board.length;
   let resLength = 0;
   for (let i = 0; i < columnsAmount; i++) {
     if (board[i][0] !== null) res[resLength++] = board[i];
@@ -169,11 +193,11 @@ function moveLeft(board) {
 
 function findChains(mode) {
   // if mode === 1 find one chain; else find all chains
-  const board = cloneBoard(g.board),
-    res = [];
-  let resLength = 0,
-    point,
-    y;
+  const board = cloneBoard(g.board);
+  const res = [];
+  let resLength = 0;
+  let point;
+  let y;
 
   for (let x = 0; x < g.columns; x++) {
     for (y = 0; y < g.rows; y++) {
@@ -214,8 +238,8 @@ function symulateGame(x, y) {
   const randomTime = Math.random() * 750 + 750;
 
   if (x === undefined) {
-    const chains = findChains(),
-      chainsLength = chains.length;
+    const chains = findChains();
+    const chainsLength = chains.length;
     if (chainsLength === 0) {
       resetGame();
       g.symulateMode = false;
@@ -233,14 +257,22 @@ function symulateGame(x, y) {
 function stopSymulate() {
   g.symulateMode = false;
   clearTimeout(g.timerId);
-  resetGame();
 }
-/****************************/
+/** ************************* */
 
 function calcBoardSize() {
   g.space = Math.floor(g.ballSize * 0.15);
   g.width = g.space + g.columns * (g.ballSize + g.space);
   g.height = g.space + g.rows * (g.ballSize + g.space) + g.scoreHeight;
+}
+
+function updateBallSize(size) {
+  if (size === g.ballSize) return;
+  g.ballSize = size;
+  calcBoardSize();
+  g.canvas.width = g.width;
+  g.canvas.height = g.height;
+  ctxDraw();
 }
 
 function initCanvas() {
@@ -258,7 +290,7 @@ function preloadImages() {
   g.img.loaded = 0;
   for (let i = 0; i < g.colorsInit; i++) {
     g.img[i] = new Image();
-    g.img[i].onload = function () {
+    g.img[i].onload = () => {
       if (++g.img.loaded >= g.colorsInit) ctxDraw();
     };
     g.img[i].src = imageSrc(i);
@@ -271,7 +303,11 @@ function ctxDraw() {
   g.ctx.fillRect(0, g.scoreHeight, g.width, g.height - g.scoreHeight);
   g.ctx.font = `${g.scoreHeight * 0.8}px Comic Sans MS`;
   g.ctx.fillStyle = "black";
-  g.ctx.fillText(`Score : ${g.score}`, g.scoreHeight, g.scoreHeight * 0.8);
+  g.ctx.fillText(
+    `${g.txt[g.lang].score}: ${g.score}`,
+    g.scoreHeight,
+    g.scoreHeight * 0.8
+  );
   g.ctx.fillStyle = "rgba(54, 175, 236, 0.4)";
   g.ctx.fillText("gh: BinaryWorlds", 25, g.scoreHeight * 2);
 
@@ -282,7 +318,8 @@ function ctxDraw() {
 
 function loadBalls() {
   const columns = g.board.length;
-  let val, y;
+  let val;
+  let y;
 
   for (let x = 0; x < columns; x++) {
     for (y = 0; y < g.rows; y++) {
@@ -300,8 +337,10 @@ function loadBalls() {
 }
 
 function mouseHandler(e) {
-  const mouseX = e.clientX - g.canvas.offsetLeft,
-    mouseY = e.clientY - g.canvas.offsetTop;
+  const { left, top } = g.canvas.getBoundingClientRect();
+  const mouseX = e.clientX - left;
+  const mouseY = e.clientY - top;
+
   if (mouseX < 0 || mouseY < 0 || mouseX > g.width || mouseY > g.height) return;
   let x = g.width / g.columnsInit;
   x = Math.floor(mouseX / x);
@@ -319,14 +358,14 @@ function clickLogic(x, y) {
     }
     return;
   }
-  const preventUpdate = g.lastSelectedChain === null ? true : false,
-    isHighlighted = findPointInChain(x, y);
+  const preventUpdate = g.lastSelectedChain === null;
+  const isHighlighted = findPointInChain(x, y);
   if (isHighlighted === true) {
     select(x, y);
     g.lastSelectedChain = null;
   } else {
-    const board = cloneBoard(g.board),
-      chain = deleteChain(x, y, board);
+    const board = cloneBoard(g.board);
+    const chain = deleteChain(x, y, board);
     if (chain === null || chain.length < 2) g.lastSelectedChain = null;
     else g.lastSelectedChain = chain;
   }
@@ -337,8 +376,9 @@ function clickLogic(x, y) {
 
 function findPointInChain(x, y) {
   if (g.lastSelectedChain === null) return false;
-  const length = g.lastSelectedChain.length;
-  let chckX, chckY;
+  const { length } = g.lastSelectedChain;
+  let chckX;
+  let chckY;
   for (let i = 0; i < length; i++) {
     [chckX, chckY] = g.lastSelectedChain[i];
     if (x === chckX && y === chckY) return true;
@@ -350,7 +390,13 @@ function findPointInChain(x, y) {
 function highlightSelected() {
   if (g.lastSelectedChain === null) return;
   const chainLength = g.lastSelectedChain.length;
-  let x1, y1, x2, y2, temp, tempLength, j;
+  let x1;
+  let y1;
+  let x2;
+  let y2;
+  let temp;
+  let tempLength;
+  let j;
   g.ctx.beginPath();
   for (let i = 0; i < chainLength; i++) {
     [x1, y1] = g.lastSelectedChain[i];
@@ -372,28 +418,38 @@ function highlightSelected() {
 }
 
 function calcPosition(x, y) {
-  const xPx = (x + 1) * (g.ballSize + g.space) - g.ballSize / 2,
-    yPx = (g.rows - y) * (g.ballSize + g.space) + g.scoreHeight - g.ballSize / 2;
+  const xPx = (x + 1) * (g.ballSize + g.space) - g.ballSize / 2;
+  const yPx =
+    (g.rows - y) * (g.ballSize + g.space) + g.scoreHeight - g.ballSize / 2;
   return [xPx, yPx];
 }
 
 function checkItIsOver() {
-  const chain = findChains(1); //find one
+  const chain = findChains(1); // find one
   if (chain.length === 0) {
     document.removeEventListener("mousedown", mouseHandler);
-    document.addEventListener("mousedown", resetGame);
+    if (!g.symulateMode) document.addEventListener("mousedown", resetGame);
 
-    g.ctx.clearRect(0, 0, g.width, g.scoreHeight);
+    g.ctx.fillStyle = "#f0f0f0";
+    g.ctx.fillRect(0, 0, g.width, g.scoreHeight + 1);
     g.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     g.ctx.fillRect(0, 0, g.width, g.height);
     const txtSize = Math.floor(g.width / 8);
     g.ctx.font = `${txtSize}px Comic Sans MS`;
     g.ctx.fillStyle = "black";
     g.ctx.textAlign = "center";
-    g.ctx.fillText("Game over!", g.width / 2, g.height / 3);
+    g.ctx.fillText(`${g.txt[g.lang].gameOver}`, g.width / 2, g.height / 3);
     g.ctx.font = `${txtSize / 2}px Comic Sans MS`;
-    g.ctx.fillText(`Score: ${g.score}`, g.width / 2, g.height / 2);
-    g.ctx.fillText("click to reset", g.width / 2, (g.height * 2) / 3);
+    g.ctx.fillText(
+      `${g.txt[g.lang].score}: ${g.score}`,
+      g.width / 2,
+      g.height / 2
+    );
+    g.ctx.fillText(
+      `${g.txt[g.lang].clickToReset}`,
+      g.width / 2,
+      (g.height * 2) / 3
+    );
   }
 }
 
