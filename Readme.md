@@ -10,7 +10,7 @@
 # Start
 
 Play online:
-https://htmlpreview.github.io/?https://github.com/BinaryWorlds/jawbreaker-game/master/index.html
+https://binaryworlds.github.io/jawbreaker-game/
 
 or:
 
