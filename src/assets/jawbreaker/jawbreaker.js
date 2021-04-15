@@ -1,6 +1,12 @@
-// https://github.com/BinaryWorlds/jawbreaker-game
+/* eslint-disable */
+import ball0 from './0.png';
+import ball1 from './1.png';
+import ball2 from './2.png';
+import ball3 from './3.png';
+import ball4 from './4.png';
 
-const g = {
+const ballList = [ball0, ball1, ball2, ball3, ball4];
+export const g = {
   rows: null,
   rowsInit: null,
   columns: null,
@@ -19,32 +25,28 @@ const g = {
   lastSelectedChain: [],
   board: [],
   symulateMode: false,
-  lang: "pl",
+  lang: 'pl',
   txt: {
     en: {
-      score: "Score",
-      gameOver: "Game over!",
-      clickToReset: "click to reset",
+      score: 'Score',
+      gameOver: 'Game over!',
+      clickToReset: 'click to reset',
     },
     pl: {
-      score: "Wynik",
-      gameOver: "Koniec gry!",
-      clickToReset: "kliknij aby zresetować",
+      score: 'Wynik',
+      gameOver: 'Koniec gry!',
+      clickToReset: 'kliknij aby zresetować',
     },
   },
 };
 
-function imageSrc(nr) {
-  return `./images/${nr}.png`;
-}
-
-function changeLang(lang) {
-  if (lang !== "en" && lang !== "pl") return;
+export function changeLang(lang) {
+  if (lang !== 'en' && lang !== 'pl') return;
   g.lang = lang;
   if (g.ctx) ctxDraw();
 }
 
-function newGame(rows, columns, colors, ballSize = 60) {
+export function newGame(rows, columns, colors, ballSize = 60) {
   g.lastSelectedChain = [];
   g.score = 0;
   g.rowsInit = g.rows = rows;
@@ -54,8 +56,8 @@ function newGame(rows, columns, colors, ballSize = 60) {
   generateBoard();
   initCanvas();
   if (!g.symulateMode) {
-    document.removeEventListener("mousedown", resetGame);
-    document.addEventListener("mousedown", mouseHandler);
+    document.removeEventListener('mousedown', resetGame);
+    document.addEventListener('mousedown', mouseHandler);
   }
 }
 
@@ -88,11 +90,9 @@ function checkPoint(x, y, board) {
   if (color === null) return res;
   let resLength = 0;
   if (x > 0 && color === board[x - 1][y]) res[resLength++] = [x - 1, y];
-  if (x < g.columns - 1 && color === board[x + 1][y])
-    res[resLength++] = [x + 1, y];
+  if (x < g.columns - 1 && color === board[x + 1][y]) res[resLength++] = [x + 1, y];
   if (y > 0 && color === board[x][y - 1]) res[resLength++] = [x, y - 1];
-  if (y < g.rows - 1 && color === board[x][y + 1])
-    res[resLength++] = [x, y + 1];
+  if (y < g.rows - 1 && color === board[x][y + 1]) res[resLength++] = [x, y + 1];
 
   return res;
 }
@@ -212,29 +212,14 @@ function findChains(mode) {
   return res;
 }
 
-function printBoard(board) {
-  let line = "",
-    val,
-    x;
-
-  for (let y = g.rows - 1; y >= 0; y--) {
-    for (x = 0; x < g.columns; x++) {
-      val = board[x][y];
-      if (val === null) val = " ";
-      line += ` ${val}`;
-    }
-    console.log(line);
-    line = "";
-  }
-}
-function startSymulate() {
+export function startSymulate() {
   if (g.symulateMode === true) return;
   g.symulateMode = true;
-  document.removeEventListener("mousedown", mouseHandler);
+  document.removeEventListener('mousedown', mouseHandler);
   symulateGame();
 }
 
-function symulateGame(x, y) {
+export function symulateGame(x, y) {
   const randomTime = Math.random() * 750 + 750;
 
   if (x === undefined) {
@@ -254,19 +239,19 @@ function symulateGame(x, y) {
   ctxDraw();
 }
 
-function stopSymulate() {
+export function stopSymulate() {
   g.symulateMode = false;
   clearTimeout(g.timerId);
 }
 /** ************************* */
 
-function calcBoardSize() {
+export function calcBoardSize() {
   g.space = Math.floor(g.ballSize * 0.15);
   g.width = g.space + g.columns * (g.ballSize + g.space);
   g.height = g.space + g.rows * (g.ballSize + g.space) + g.scoreHeight;
 }
 
-function updateBallSize(size) {
+export function updateBallSize(size) {
   if (size === g.ballSize) return;
   g.ballSize = size;
   calcBoardSize();
@@ -277,11 +262,11 @@ function updateBallSize(size) {
 
 function initCanvas() {
   calcBoardSize();
-  g.canvas = document.getElementById("gameArea");
+  // g.canvas = document.getElementById("gameArea");
   g.canvas.width = g.width;
   g.canvas.height = g.height;
-  if (!g.canvas.getContext && !g.canvas.getContext("2d")) return alert("ERROR");
-  g.ctx = g.canvas.getContext("2d");
+  // if (!g.canvas.getContext && !g.canvas.getContext("2d")) return alert("ERROR");
+  // g.ctx = g.canvas.getContext("2d");
   preloadImages();
 }
 
@@ -293,23 +278,17 @@ function preloadImages() {
     g.img[i].onload = () => {
       if (++g.img.loaded >= g.colorsInit) ctxDraw();
     };
-    g.img[i].src = imageSrc(i);
+    g.img[i].src = ballList[i];
   }
 }
 
 function ctxDraw() {
   g.ctx.clearRect(0, 0, g.width, g.height);
-  g.ctx.fillStyle = "#f0f0f0";
+  g.ctx.fillStyle = '#f0f0f0';
   g.ctx.fillRect(0, g.scoreHeight, g.width, g.height - g.scoreHeight);
   g.ctx.font = `${g.scoreHeight * 0.8}px Comic Sans MS`;
-  g.ctx.fillStyle = "black";
-  g.ctx.fillText(
-    `${g.txt[g.lang].score}: ${g.score}`,
-    g.scoreHeight,
-    g.scoreHeight * 0.8
-  );
-  g.ctx.fillStyle = "rgba(54, 175, 236, 0.4)";
-  g.ctx.fillText("gh: BinaryWorlds", 25, g.scoreHeight * 2);
+  g.ctx.fillStyle = 'black';
+  g.ctx.fillText(`${g.txt[g.lang].score}: ${g.score}`, g.scoreHeight, g.scoreHeight * 0.8);
 
   highlightSelected();
   loadBalls();
@@ -330,7 +309,7 @@ function loadBalls() {
         g.space + x * (g.ballSize + g.space),
         g.height - (y + 1) * (g.ballSize + g.space),
         g.ballSize,
-        g.ballSize
+        g.ballSize,
       );
     }
   }
@@ -411,50 +390,39 @@ function highlightSelected() {
   }
 
   g.ctx.lineWidth = g.ballSize + g.space;
-  g.ctx.lineCap = "round";
-  g.ctx.lineJoin = "round";
-  g.ctx.strokeStyle = "rgba(54, 175, 236, 0.4)";
+  g.ctx.lineCap = 'round';
+  g.ctx.lineJoin = 'round';
+  g.ctx.strokeStyle = 'rgba(54, 175, 236, 0.4)';
   g.ctx.stroke();
 }
 
 function calcPosition(x, y) {
   const xPx = (x + 1) * (g.ballSize + g.space) - g.ballSize / 2;
-  const yPx =
-    (g.rows - y) * (g.ballSize + g.space) + g.scoreHeight - g.ballSize / 2;
+  const yPx = (g.rows - y) * (g.ballSize + g.space) + g.scoreHeight - g.ballSize / 2;
   return [xPx, yPx];
 }
 
 function checkItIsOver() {
   const chain = findChains(1); // find one
   if (chain.length === 0) {
-    document.removeEventListener("mousedown", mouseHandler);
-    if (!g.symulateMode) document.addEventListener("mousedown", resetGame);
+    document.removeEventListener('mousedown', mouseHandler);
+    if (!g.symulateMode) document.addEventListener('mousedown', resetGame);
 
-    g.ctx.fillStyle = "#f0f0f0";
+    g.ctx.fillStyle = '#f0f0f0';
     g.ctx.fillRect(0, 0, g.width, g.scoreHeight + 1);
-    g.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+    g.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     g.ctx.fillRect(0, 0, g.width, g.height);
     const txtSize = Math.floor(g.width / 8);
     g.ctx.font = `${txtSize}px Comic Sans MS`;
-    g.ctx.fillStyle = "black";
-    g.ctx.textAlign = "center";
+    g.ctx.fillStyle = 'black';
+    g.ctx.textAlign = 'center';
     g.ctx.fillText(`${g.txt[g.lang].gameOver}`, g.width / 2, g.height / 3);
     g.ctx.font = `${txtSize / 2}px Comic Sans MS`;
-    g.ctx.fillText(
-      `${g.txt[g.lang].score}: ${g.score}`,
-      g.width / 2,
-      g.height / 2
-    );
-    g.ctx.fillText(
-      `${g.txt[g.lang].clickToReset}`,
-      g.width / 2,
-      (g.height * 2) / 3
-    );
+    g.ctx.fillText(`${g.txt[g.lang].score}: ${g.score}`, g.width / 2, g.height / 2);
+    g.ctx.fillText(`${g.txt[g.lang].clickToReset}`, g.width / 2, (g.height * 2) / 3);
   }
 }
 
-function resetGame() {
+export function resetGame() {
   newGame(g.rowsInit, g.columnsInit, g.colorsInit, g.ballSize);
 }
-
-newGame(12, 12, 5, 60);
