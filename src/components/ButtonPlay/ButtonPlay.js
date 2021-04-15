@@ -24,12 +24,8 @@ function ButtonPlay({ className }) {
   const playTxt = isPl ? 'Zagraj!' : 'Play!';
 
   return (
-    <S.Button
-      className={className}
-      aria-label="FullScreen"
-      onClick={onPlayClick}
-      animate={isAnimatePlay}
-      onAnimationEnd={onAnimationEnd}>
+    <S.Button className={className} aria-label="FullScreen" onClick={onPlayClick}>
+      <S.Icon animate={isAnimatePlay} onAnimationEnd={onAnimationEnd} className="playIcon" />
       {isPlay ? 'Reset!' : playTxt}
     </S.Button>
   );

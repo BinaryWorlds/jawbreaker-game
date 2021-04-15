@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import { visibleIn, visibleOut } from '../../animations/visible';
 
 export const Settings = styled.div`
-  z-index: 201;
+  z-index: 100;
   position: absolute;
-  top: 10rem;
+  top: 5rem;
   right: 2rem;
   width: 30rem;
   padding-bottom: 3rem;

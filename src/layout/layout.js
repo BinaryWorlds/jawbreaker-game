@@ -16,7 +16,7 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     font-size: 1.6rem;
     font-family: inherit;
-    color: ${theme.colors.text};
+    color: ${theme.colors.black};
   }
 
   *,

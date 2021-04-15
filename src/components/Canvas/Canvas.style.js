@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const Canvas = styled.canvas`
-  z-index: 200;
+  z-index: 1;
   touch-action: manipulation;
   filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.2));
   image-rendering: optimizespeed;

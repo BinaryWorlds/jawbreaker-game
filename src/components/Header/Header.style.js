@@ -5,12 +5,18 @@ import { BasicHint } from '../../hooks/useHint';
 export const Section = styled.div`
   z-index: 201;
   position: absolute;
-  top: 2rem;
+  top: 1rem;
   right: 2rem;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  width: 30rem;
+  align-items: center;
+  justify-content: flex-end;
+  height: 5rem;
+  button {
+    margin-left: 4rem;
+  }
+  button:first-child {
+    margin: 0;
+  }
 `;
 
 export const ButtonSettings = styled(Button)``;

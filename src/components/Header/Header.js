@@ -12,8 +12,8 @@ function Header({ isHintShow }) {
 
   return (
     <S.Section>
-      <S.ButtonSettings>{isPl ? 'Ustawienia' : 'Settings'}</S.ButtonSettings>
       <ButtonPlay />
+      <S.ButtonSettings>{isPl ? 'Ustawienia' : 'Settings'}</S.ButtonSettings>
       <ButtonFullScreen />
       <S.Hint isHintShow={isHintShow}>{isPl ? 'Kliknij Zagraj' : 'Click Play'}</S.Hint>
     </S.Section>

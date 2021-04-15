@@ -72,14 +72,14 @@ function Settings({ gameSize, getParams }) {
         name={isPl ? 'Rzędy: ' : 'Rows: '}
         value={rows}
         setValue={updateRows}
-        min={8}
+        min={7}
         max={calcMaxRows()}
       />
       <RangeSlider
         name={isPl ? 'Kolumny: ' : 'Columns: '}
         value={columns}
         setValue={updateColumns}
-        min={8}
+        min={7}
         max={calcMaxColumns()}
       />
       <RangeSlider
