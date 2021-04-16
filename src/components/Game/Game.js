@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Header from '../Header/Header';
@@ -17,12 +17,13 @@ import {
   updateBallSize,
   g,
 } from '../../assets/jawbreaker/jawbreaker';
+import { calcMaxRows, calcMaxColumns } from '../../utils/calcSize';
 
 function Game() {
   const dispatch = useDispatch();
 
   const {
-    app: { isPl, isFullScreen, isSettingsActive, isAnimatePlay },
+    app: { isPl, isSettingsActive, isAnimatePlay },
     game: { ballSize, rows, columns, colors, isPlay },
   } = useSelector((state) => state);
 
@@ -34,28 +35,23 @@ function Game() {
     dispatch(updateAnimate(true));
   };
 
-  const checkGameSize = () => {
-    const width = window.innerWidth;
-    if (width > 2000) return 2;
-    if (width > 1300) return 1;
-    return 0;
-  };
-
-  const [gameSize, setGameSize] = useState(checkGameSize);
-  const updateGameSize = () => setGameSize(checkGameSize);
-
-  const getParams = (size) => {
-    const ball = size === 2 ? 60 : 40;
-    const r = size !== 0 ? 12 : 9;
-    const c = size !== 0 ? 15 : 12;
-    return [r, c, 5, ball];
-  };
-
   const checkIsDifferent = (r, c, k) =>
     r !== g.rowsInit || c !== g.columnsInit || k !== g.colorsInit;
 
-  const initGame = (size = 0, mode = false) => {
-    const [r, c, k, s] = getParams(size);
+  const checkScale = () => {
+    const { innerWidth, innerHeight } = window;
+    if (innerWidth > 1400 || innerHeight > 1400) return 0.7;
+    if (innerWidth > 1000 || innerHeight > 1000) return 0.8;
+    return 1;
+  };
+
+  const initGame = (mode = false) => {
+    const scale = checkScale();
+    const s = scale === 1 ? 25 : 40;
+    const r = calcMaxRows(s, scale);
+    const c = calcMaxColumns(s, scale);
+    const k = 5;
+
     const check = checkIsDifferent(r, c, k);
     if (!check) {
       updateBallSize(s);
@@ -77,11 +73,6 @@ function Game() {
   }, [isPl]);
 
   useEffect(() => {
-    if (isFullScreen) return;
-    initGame(gameSize, isPlay);
-  }, [gameSize]);
-
-  useEffect(() => {
     if (!isSettingsActive) return;
     const check = checkIsDifferent(rows, columns, colors);
     if (!check) return;
@@ -97,9 +88,8 @@ function Game() {
   }, [ballSize]);
 
   useEffect(() => {
-    window.addEventListener('resize', updateGameSize);
+    initGame(isPlay);
     return () => {
-      window.removeEventListener('resize', updateGameSize);
       stopSymulate();
       g.columnsInit = 0;
     };
@@ -108,7 +98,7 @@ function Game() {
   return (
     <S.Wrapper>
       <Header isHintShow={isHintShow} />
-      <Settings gameSize={gameSize} getParams={getParams} />
+      <Settings initGame={initGame} />
       <Canvas handleAnimate={handleAnimate} />
     </S.Wrapper>
   );
