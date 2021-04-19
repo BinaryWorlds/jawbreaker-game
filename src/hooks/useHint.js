@@ -42,6 +42,7 @@ export const BasicHint = styled.div`
   color: white;
   padding: 1rem;
   white-space: nowrap;
+  border-radius: 3rem;
 
   font-size: ${({ theme }) => theme.fonts.size.s};
   font-weight: ${({ theme }) => theme.fonts.weight.bold};

@@ -24,7 +24,7 @@ export const Button = styled.button`
   border: 0;
   display: flex;
   align-items: center;
-  width: 12rem;
+  width: 11rem;
   font-size: ${({ theme }) => theme.fonts.size.s};
   font-weight: ${({ theme }) => theme.fonts.weight.bold};
 

@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Header from '../Header/Header';
 import Canvas from '../Canvas/Canvas';
 import Settings from '../Settings/Settings';
 import useHint from '../../hooks/useHint';
-import { updateAllParams } from '../../store/game/actions';
+import { updateAllParams, updateBallSize } from '../../store/game/actions';
 import { updateAnimate } from '../../store/app/actions';
 import * as S from './Game.style';
 
@@ -14,7 +14,7 @@ import {
   newGame,
   startSymulate,
   stopSymulate,
-  updateBallSize,
+  updateBallSize as updateBallSizeInGame,
   g,
 } from '../../assets/jawbreaker/jawbreaker';
 import { calcMaxRows, calcMaxColumns } from '../../utils/calcSize';
@@ -26,6 +26,8 @@ function Game() {
     app: { isPl, isSettingsActive, isAnimatePlay },
     game: { ballSize, rows, columns, colors, isPlay },
   } = useSelector((state) => state);
+
+  const isPlayRef = useRef(false);
 
   const { isHintShow, handleHint, hideHint } = useHint(3);
 
@@ -39,31 +41,52 @@ function Game() {
     r !== g.rowsInit || c !== g.columnsInit || k !== g.colorsInit;
 
   const checkScale = () => {
-    const { innerWidth, innerHeight } = window;
-    if (innerWidth > 1400 || innerHeight > 1400) return 0.7;
-    if (innerWidth > 1000 || innerHeight > 1000) return 0.8;
+    const { clientWidth, clientHeight } = document.documentElement;
+    if (clientWidth > 2000 || clientHeight > 2000) return 0.6;
+    if (clientWidth > 1000 || clientHeight > 1000) return 0.8;
     return 1;
   };
 
-  const initGame = (mode = false) => {
+  const checkGameSize = () => {
     const scale = checkScale();
     const s = scale === 1 ? 25 : 40;
     const r = calcMaxRows(s, scale);
     const c = calcMaxColumns(s, scale);
     const k = 5;
+    return { r, c, k, s };
+  };
 
+  const initGame = () => {
+    const { r, c, k, s } = checkGameSize();
     const check = checkIsDifferent(r, c, k);
     if (!check) {
-      updateBallSize(s);
+      if (ballSize !== s) dispatch(updateBallSize(s));
+      updateBallSizeInGame(s);
       return;
     }
     stopSymulate();
     newGame(r, c, k, s);
     dispatch(updateAllParams(r, c, k, s));
-    if (!mode) startSymulate();
+    if (!isPlayRef.current) startSymulate();
+  };
+
+  const shouldResize = () => {
+    const { r, c, s } = checkGameSize();
+
+    const diffTreshold = 5;
+
+    if (
+      g.ballSize !== s ||
+      r < g.rowsInit ||
+      c < g.columnsInit ||
+      r > g.rowsInit + diffTreshold ||
+      c > g.columnsInit + diffTreshold
+    )
+      initGame();
   };
 
   useEffect(() => {
+    isPlayRef.current = isPlay;
     if (isPlay) hideHint();
   }, [isPlay]);
 
@@ -84,12 +107,14 @@ function Game() {
 
   useEffect(() => {
     if (!isSettingsActive) return;
-    updateBallSize(ballSize);
+    updateBallSizeInGame(ballSize);
   }, [ballSize]);
 
   useEffect(() => {
+    window.addEventListener('resize', shouldResize);
     initGame(isPlay);
     return () => {
+      window.removeEventListener('resize', shouldResize);
       stopSymulate();
       g.columnsInit = 0;
     };

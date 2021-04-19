@@ -10,10 +10,8 @@ function ButtonFullScreen({ className }) {
 
   const onClick = () => {
     dispatch(toggleFullScreen());
-    if (isFullScreen) {
-      // initGame(gameSize, gameMode);
-      closeFullScreen();
-    } else openFullScreen();
+    if (isFullScreen) closeFullScreen();
+    else openFullScreen();
   };
 
   const fragments = ['fr1', 'fr2', 'fr3', 'fr4'].map((el, index) => (

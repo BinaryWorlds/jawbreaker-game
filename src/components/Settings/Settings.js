@@ -16,12 +16,15 @@ function Settings({ initGame }) {
   } = useSelector((state) => state);
 
   const calcMaxBallSize = () => {
-    const { innerWidth, innerHeight } = window;
-    const margin = ballSize * 0.15;
-    const maxSizeColumn = (innerWidth - margin) / (columns * 1.15);
-    const maxSizeRows = (innerHeight - margin - g.scoreHeight) / (rows * 1.15);
+    const { clientWidth, clientHeight } = document.documentElement;
 
-    const maxSize = maxSizeColumn < maxSizeRows ? maxSizeColumn : maxSizeRows;
+    const spaceColumn = (clientWidth - 10) / columns;
+    const spaceRows = (clientHeight - g.scoreHeight - 70) / rows;
+
+    let maxSize = spaceColumn < spaceRows ? spaceColumn : spaceRows;
+    maxSize -= Math.floor(maxSize * 0.15);
+
+    if (maxSize > 60) return 60;
     return Math.floor(maxSize);
   };
 

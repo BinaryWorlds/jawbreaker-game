@@ -12,7 +12,7 @@ export const Section = styled.div`
   justify-content: flex-end;
   height: 5rem;
   button {
-    margin-left: 4rem;
+    margin-left: 3rem;
   }
   button:first-child {
     margin: 0;
