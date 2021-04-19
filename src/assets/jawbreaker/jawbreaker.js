@@ -17,7 +17,7 @@ export const g = {
   ballSize: null,
   width: null,
   height: null,
-  scoreHeight: 50,
+  scoreHeight: 40,
   space: null,
   canvas: null,
   ctx: null,
@@ -412,7 +412,8 @@ function checkItIsOver() {
     g.ctx.fillRect(0, 0, g.width, g.scoreHeight + 1);
     g.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     g.ctx.fillRect(0, 0, g.width, g.height);
-    const txtSize = Math.floor(g.width / 8);
+    const smallerSide = Math.min(g.width, g.height);
+    const txtSize = Math.min(Math.floor(smallerSide / 8), 100);
     g.ctx.font = `${txtSize}px Comic Sans MS`;
     g.ctx.fillStyle = 'black';
     g.ctx.textAlign = 'center';
