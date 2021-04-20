@@ -25,6 +25,7 @@
 - React
   - Hooks
   - Redux
+- Canvas
 - Styled Components
 - Service Worker
 - Eslint
@@ -34,4 +35,4 @@
 
 Play online: [https://binaryworlds.github.io/jawbreaker-game/](https://binaryworlds.github.io/jawbreaker-game/)
 
-<div align="center"><img align="center" height="500px" alt="demo" src="readme/demo.gif"></div>
+<div align="center"><img align="center" alt="demo gif" src="readme/demo.gif"></div>
