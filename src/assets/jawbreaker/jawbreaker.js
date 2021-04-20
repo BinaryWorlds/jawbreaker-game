@@ -251,20 +251,41 @@ export function calcBoardSize() {
   g.height = g.space + g.rows * (g.ballSize + g.space) + g.scoreHeight;
 }
 
+export function getRatio() {
+  const dpr = window.devicePixelRatio || 1;
+  const bsr =
+    g.ctx.webkitBackingStorePixelRatio ||
+    g.ctx.mozBackingStorePixelRatio ||
+    g.ctx.msBackingStorePixelRatio ||
+    g.ctx.oBackingStorePixelRatio ||
+    g.ctx.backingStorePixelRatio ||
+    1;
+
+  return dpr / bsr;
+}
+
+function updateCanvasSize() {
+  const ratio = getRatio();
+  g.canvas.width = g.width * ratio;
+  g.canvas.height = g.height * ratio;
+  g.canvas.style.width = `${g.width}px`;
+  g.canvas.style.height = `${g.height}px`;
+  g.ctx.scale(ratio, ratio);
+}
+
 export function updateBallSize(size) {
   if (size === g.ballSize) return;
   g.ballSize = size;
   calcBoardSize();
-  g.canvas.width = g.width;
-  g.canvas.height = g.height;
+  updateCanvasSize();
   ctxDraw();
 }
 
 function initCanvas() {
   calcBoardSize();
   // g.canvas = document.getElementById("gameArea");
-  g.canvas.width = g.width;
-  g.canvas.height = g.height;
+
+  updateCanvasSize();
   // if (!g.canvas.getContext && !g.canvas.getContext("2d")) return alert("ERROR");
   // g.ctx = g.canvas.getContext("2d");
   preloadImages();

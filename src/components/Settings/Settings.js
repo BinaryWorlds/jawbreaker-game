@@ -16,6 +16,7 @@ function Settings({ initGame }) {
   } = useSelector((state) => state);
 
   const calcMaxBallSize = () => {
+    if (!columns || !rows) return 0;
     const { clientWidth, clientHeight } = document.documentElement;
 
     const spaceColumn = (clientWidth - 10) / columns;
