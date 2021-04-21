@@ -5,7 +5,9 @@ export const Button = styled.button`
   cursor: pointer;
   outline: none;
   border: none;
+`;
 
+export const Inner = styled.div`
   width: 6rem;
   height: 4.2rem;
   padding: 0.5rem;

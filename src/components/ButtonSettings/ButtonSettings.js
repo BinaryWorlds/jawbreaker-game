@@ -10,14 +10,12 @@ function ButtonSettings({ className }) {
   const onClick = () => dispatch(toggleSettings());
 
   return (
-    <S.Button
-      className={className}
-      aria-label="Settings"
-      onClick={onClick}
-      isActive={isSettingsActive}>
-      <S.Line up isActive={isSettingsActive} start="1" className="lineOne" />
-      <S.Line center isActive={isSettingsActive} start="3" className="lineTwo" />
-      <S.Line down isActive={isSettingsActive} start="2" className="lineThree" />
+    <S.Button className={className} aria-label="Settings" onClick={onClick}>
+      <S.Inner isActive={isSettingsActive}>
+        <S.Line up isActive={isSettingsActive} start="1" className="lineOne" />
+        <S.Line center isActive={isSettingsActive} start="3" className="lineTwo" />
+        <S.Line down isActive={isSettingsActive} start="2" className="lineThree" />
+      </S.Inner>
     </S.Button>
   );
 }
