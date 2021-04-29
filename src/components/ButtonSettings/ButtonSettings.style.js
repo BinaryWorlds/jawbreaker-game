@@ -17,27 +17,10 @@ export const Inner = styled.div`
   transition: all 0.2s;
 
   ${({ isActive }) =>
-    isActive
-      ? css`
-          transform: scale(0.9);
-        `
-      : css`
-          :hover,
-          :focus-visible {
-            .lineOne:before,
-            .lineOne:after {
-              transform: translate(3rem, -50%);
-            }
-            .lineTwo:before,
-            .lineTwo:after {
-              transform: translate(1.5rem, -50%);
-            }
-            .lineThree:before,
-            .lineThree:after {
-              transform: translate(2.5rem, -50%);
-            }
-          }
-        `};
+    isActive &&
+    css`
+      transform: scale(0.9);
+    `};
 `;
 
 export const Line = styled.div`
@@ -79,8 +62,8 @@ export const Line = styled.div`
     opacity: ${({ isActive }) => (isActive ? 0 : 1)};
     background-color: white;
     height: 0.8rem;
-    transform: translate(${({ start }) => `${start}rem, -50%`});
     transition: all 0.2s linear;
+    transform: translate(${({ start }) => `${start}rem, -50%`});
   }
 
   :before {
@@ -91,5 +74,12 @@ export const Line = styled.div`
     border: 0.2rem solid ${({ theme }) => theme.colors.black};
     border-radius: 50%;
     width: 0.8rem;
+  }
+
+  ${Button}:hover && {
+    :before,
+    :after {
+      transform: translate(${({ end }) => `${end}rem, -50%`});
+    }
   }
 `;

@@ -12,9 +12,9 @@ function ButtonSettings({ className }) {
   return (
     <S.Button className={className} aria-label="Settings" onClick={onClick}>
       <S.Inner isActive={isSettingsActive}>
-        <S.Line up isActive={isSettingsActive} start="1" className="lineOne" />
-        <S.Line center isActive={isSettingsActive} start="3" className="lineTwo" />
-        <S.Line down isActive={isSettingsActive} start="2" className="lineThree" />
+        <S.Line up isActive={isSettingsActive} start="1" end="3" />
+        <S.Line center isActive={isSettingsActive} start="3" end="1.5" />
+        <S.Line down isActive={isSettingsActive} start="2" end="2.5" />
       </S.Inner>
     </S.Button>
   );
